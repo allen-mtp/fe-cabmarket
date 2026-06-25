@@ -1,0 +1,180 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+
+    --destructive: 0 72% 51%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+
+    --radius: 1rem;
+
+    --taxi: 245 80% 60%;
+    --taxi-foreground: 0 0% 100%;
+    --taxi-soft: 245 80% 96%;
+
+    --market: 158 72% 40%;
+    --market-foreground: 0 0% 100%;
+    --market-soft: 158 72% 96%;
+
+    --success: 158 72% 40%;
+    --success-foreground: 0 0% 100%;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+
+    --card: 240 10% 5.5%;
+    --card-foreground: 0 0% 98%;
+
+    --popover: 240 10% 5.5%;
+    --popover-foreground: 0 0% 98%;
+
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+
+    --secondary: 240 3.7% 13%;
+    --secondary-foreground: 0 0% 98%;
+
+    --muted: 240 3.7% 13%;
+    --muted-foreground: 240 5% 64.9%;
+
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+
+    --destructive: 0 62.8% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+
+    --taxi: 245 85% 70%;
+    --taxi-foreground: 240 10% 3.9%;
+    --taxi-soft: 245 35% 16%;
+
+    --market: 158 64% 55%;
+    --market-foreground: 240 10% 3.9%;
+    --market-soft: 158 32% 13%;
+
+    --success: 158 64% 55%;
+    --success-foreground: 240 10% 3.9%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1, "tnum" 1;
+  }
+
+  html {
+    -webkit-tap-highlight-color: transparent;
+    scroll-behavior: smooth;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+}
+
+@layer components {
+  .app-surface {
+    background-color: hsl(var(--background));
+    background-image:
+      radial-gradient(
+        45rem 45rem at 100% -5%,
+        hsl(var(--taxi) / 0.06),
+        transparent 55%
+      ),
+      radial-gradient(
+        40rem 40rem at -5% 100%,
+        hsl(var(--market) / 0.06),
+        transparent 55%
+      );
+    background-attachment: fixed;
+  }
+
+  .glass {
+    @apply bg-card/75 backdrop-blur-2xl;
+  }
+
+  .glass-strong {
+    @apply bg-card/90 backdrop-blur-3xl;
+  }
+
+  .bg-brand {
+    @apply bg-gradient-to-r from-taxi to-market;
+  }
+
+  .bg-brand-subtle {
+    @apply bg-gradient-to-br from-taxi/5 via-transparent to-market/5;
+  }
+
+  .text-gradient {
+    @apply bg-gradient-to-r from-taxi to-market bg-clip-text text-transparent;
+  }
+
+  .ring-brand {
+    @apply ring-1 ring-taxi/20 ring-offset-0;
+  }
+
+  .skeleton {
+    @apply relative overflow-hidden rounded-md bg-muted;
+  }
+  .skeleton::after {
+    content: "";
+    @apply absolute inset-0 -translate-x-full;
+    background: linear-gradient(
+      90deg,
+      transparent,
+      hsl(var(--background) / 0.4),
+      transparent
+    );
+    animation: shimmer 1.5s infinite;
+  }
+
+  .card-hover {
+    @apply transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-taxi/5;
+  }
+}
