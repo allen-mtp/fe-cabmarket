@@ -16,6 +16,7 @@ export interface LoginInput {
 
 export interface UserResponse {
   user: User;
+  token?: string;
 }
 
 export interface Transaction {

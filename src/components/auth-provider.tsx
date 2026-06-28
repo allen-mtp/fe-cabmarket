@@ -4,7 +4,7 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { authApi } from "@/lib/api";
-import { getStoredUser, removeStoredUser, setStoredUser } from "@/lib/auth";
+import { getStoredUser, removeStoredUser, removeStoredToken, setStoredUser } from "@/lib/auth";
 import type { ApiError, LoginInput, User } from "@/types";
 
 interface AuthContextValue {
@@ -43,6 +43,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       .catch(() => {
         removeStoredUser();
+        removeStoredToken();
         setUser(null);
       })
       .finally(() => setInitializing(false));
@@ -67,6 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await authApi.logout();
     setUser(null);
     removeStoredUser();
+    removeStoredToken();
     router.replace("/login");
   }, [router]);
 

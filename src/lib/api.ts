@@ -1,4 +1,5 @@
 import axios, { type AxiosInstance, AxiosError } from "axios";
+import { getStoredToken, removeStoredToken, setStoredToken } from "./auth";
 import type {
   ApiError,
   BalancesResponse,
@@ -24,6 +25,14 @@ export const api: AxiosInstance = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+});
+
+api.interceptors.request.use((config) => {
+  const token = getStoredToken();
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
 });
 
 api.interceptors.response.use(
@@ -63,6 +72,9 @@ export const authApi = {
       "/auth/login",
       input,
     );
+    if (data.data.token) {
+      setStoredToken(data.data.token);
+    }
     return data.data.user;
   },
   me: async (): Promise<User> => {
@@ -73,6 +85,7 @@ export const authApi = {
   },
   logout: async () => {
     await api.post("/auth/logout");
+    removeStoredToken();
   },
 };
 
