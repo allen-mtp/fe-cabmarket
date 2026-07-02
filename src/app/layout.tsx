@@ -22,10 +22,20 @@ export const metadata: Metadata = {
   applicationName: "CabMarket",
   authors: [{ name: "CabMarket" }],
   keywords: ["chi tiêu", "taxi", "sinh hoạt", "quản lý tiền", "cá nhân"],
+  manifest: "/manifest.webmanifest",
   icons: {
-    icon: "/favicon.svg",
+    icon: [
+      { url: "/favicon.svg", type: "image/svg+xml" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/icon-512.png", sizes: "512x512", type: "image/png" },
+    ],
     shortcut: "/favicon.svg",
-    apple: "/favicon.svg",
+    apple: "/apple-touch-icon.png",
+  },
+  appleWebApp: {
+    capable: true,
+    title: "CabMarket",
+    statusBarStyle: "default",
   },
 };
 
@@ -38,6 +48,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
