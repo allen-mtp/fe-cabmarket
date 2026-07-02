@@ -13,8 +13,9 @@ import { useMembers } from "@/hooks/use-members";
 export default function MembersPage() {
   const { members, status, saveMembers } = useMembers();
   const [list, setList] = React.useState<string[]>([]);
-  const [draft, setDraft] = React.useState("");
   const [saving, setSaving] = React.useState(false);
+  const inputRef = React.useRef<HTMLInputElement>(null);
+  const [isEmpty, setIsEmpty] = React.useState(true);
 
   React.useEffect(() => {
     setList(members);
@@ -24,22 +25,26 @@ export default function MembersPage() {
     list.length !== members.length || list.some((m, i) => m !== members[i]);
 
   const addMember = () => {
-    const name = draft.trim();
+    const input = inputRef.current;
+    if (!input) return;
+    const name = input.value.trim();
+    // Luôn xoá ô nhập khi Enter / bấm Thêm.
+    input.value = "";
+    setIsEmpty(true);
+    input.focus();
+
     if (!name) return;
     if (name.length > 30) {
       toast.error("Tên không quá 30 ký tự");
       return;
     }
-    if (list.some((m) => m.toLowerCase() === name.toLowerCase())) {
-      toast.error("Tên này đã có trong danh sách");
-      return;
-    }
+    // Đã có trong danh sách -> bỏ qua, không báo lỗi.
+    if (list.some((m) => m.toLowerCase() === name.toLowerCase())) return;
     if (list.length >= 30) {
       toast.error("Tối đa 30 thành viên");
       return;
     }
     setList([...list, name]);
-    setDraft("");
   };
 
   const removeMember = (name: string) => {
@@ -83,10 +88,10 @@ export default function MembersPage() {
         <CardContent className="space-y-4">
           <div className="flex gap-2">
             <Input
-              placeholder="Nhập tên, ví dụ: An, Bình, Châu..."
-              value={draft}
+              ref={inputRef}
+              placeholder="Nhập tên..."
               maxLength={30}
-              onChange={(e) => setDraft(e.target.value)}
+              onChange={(e) => setIsEmpty(!e.target.value.trim())}
               onKeyDown={(e) => {
                 if (e.key === "Enter") {
                   e.preventDefault();
@@ -97,7 +102,7 @@ export default function MembersPage() {
             <Button
               type="button"
               onClick={addMember}
-              disabled={!draft.trim()}
+              disabled={isEmpty}
               className="shrink-0 gap-1.5 rounded-lg"
             >
               <Plus className="h-4 w-4" />

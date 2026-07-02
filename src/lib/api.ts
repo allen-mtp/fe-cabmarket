@@ -124,6 +124,14 @@ export const transactionsApi = {
     return id;
   },
 
+  deleteMany: async (ids: string[]) => {
+    const { data } = await api.delete<{ success: boolean; data: { deleted: number } }>(
+      "/transactions/batch",
+      { data: { ids } },
+    );
+    return data.data.deleted;
+  },
+
   dashboard: async (month?: number, year?: number) => {
     const { data } = await api.get<{ success: boolean; data: DashboardData }>(
       "/transactions/dashboard",

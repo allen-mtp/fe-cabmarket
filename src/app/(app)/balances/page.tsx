@@ -22,18 +22,20 @@ export default function BalancesPage() {
 
   const loading = status === "loading" && balances.length === 0;
 
-  const totalOutstanding = balances.reduce((s, b) => s + b.outstanding, 0);
-  const totalOwed = balances.reduce((s, b) => s + b.owed, 0);
-  const debtors = balances.filter((b) => b.owed > 0);
+  const totalToCollect = balances
+    .filter((b) => b.balance > 0)
+    .reduce((s, b) => s + b.balance, 0);
+  const totalToPay = balances
+    .filter((b) => b.balance < 0)
+    .reduce((s, b) => s + Math.abs(b.balance), 0);
+  const allMembers = balances.sort((a, b) => a.balance - b.balance);
 
   return (
     <div className="space-y-6 animate-fade-in">
       <div>
-        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
-          Công nợ
-        </h1>
+        <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">Công nợ</h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Tổng số tiền mỗi thành viên cần trả và trạng thái thanh toán.
+          Theo dõi ai đang nợ ai bao nhiêu.
         </p>
       </div>
 
@@ -45,12 +47,10 @@ export default function BalancesPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-taxi/15 text-taxi">
                 <Wallet className="h-4.5 w-4.5" />
               </div>
-              <p className="text-xs font-medium text-muted-foreground">
-                Còn phải thu
-              </p>
+              <p className="text-xs font-medium text-muted-foreground">Còn phải thu</p>
             </div>
             <p className="mt-2 text-2xl font-bold tabular-nums text-taxi sm:text-3xl">
-              {loading ? "—" : formatAED(totalOutstanding)}
+              {loading ? "—" : formatAED(totalToCollect)}
             </p>
           </CardContent>
         </Card>
@@ -61,12 +61,10 @@ export default function BalancesPage() {
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-market/15 text-market">
                 <ArrowRightLeft className="h-4.5 w-4.5" />
               </div>
-              <p className="text-xs font-medium text-muted-foreground">
-                Tổng đã chia
-              </p>
+              <p className="text-xs font-medium text-muted-foreground">Còn phải trả</p>
             </div>
-            <p className="mt-2 text-2xl font-bold tabular-nums sm:text-3xl">
-              {loading ? "—" : formatAED(totalOwed)}
+            <p className="mt-2 text-2xl font-bold tabular-nums text-market sm:text-3xl">
+              {loading ? "—" : formatAED(totalToPay)}
             </p>
           </CardContent>
         </Card>
@@ -82,10 +80,10 @@ export default function BalancesPage() {
         <CardContent className="space-y-2.5">
           {loading ? (
             <BalanceSkeleton />
-          ) : debtors.length === 0 ? (
+          ) : allMembers.length === 0 ? (
             <EmptyState />
           ) : (
-            debtors.map((b) => (
+            allMembers.map((b) => (
               <BalanceRow key={b.name} balance={b} onMarkPaid={markPaid} />
             ))
           )}
@@ -117,59 +115,68 @@ function BalanceRow({
   };
 
   const initials = balance.name.trim().slice(0, 2).toUpperCase();
+  const isOwed = balance.balance > 0;
+  const isZero = balance.balance === 0;
+  const abs = Math.abs(balance.balance);
 
   return (
     <div
       className={cn(
         "flex items-center gap-3 rounded-xl border p-3.5 transition-all duration-200",
-        balance.paid
+        isZero
           ? "border-market/25 bg-market/[0.04]"
-          : "border-border/50 bg-card hover:border-taxi/20 hover:bg-taxi/[0.03]",
+          : isOwed
+            ? "border-taxi/20 bg-taxi/[0.03]"
+            : "border-market/20 bg-market/[0.03]",
       )}
     >
       <div
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-sm font-semibold shadow-sm",
-          balance.paid
+          isZero
             ? "bg-market/15 text-market"
-            : "bg-gradient-to-br from-taxi to-market text-white",
+            : isOwed
+              ? "bg-gradient-to-br from-taxi to-taxi/80 text-white"
+              : "bg-gradient-to-br from-market to-market/80 text-white",
         )}
       >
-        {balance.paid ? <Check className="h-5 w-5" strokeWidth={2.5} /> : initials}
+        {isZero ? <Check className="h-5 w-5" strokeWidth={2.5} /> : initials}
       </div>
 
       <div className="min-w-0 flex-1">
         <div className="flex items-center gap-2">
           <p className="truncate font-semibold">{balance.name}</p>
-          {balance.paid ? (
+          {isZero ? (
             <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-market/15 px-2.5 py-0.5 text-[11px] font-semibold text-market">
               <Check className="h-3 w-3" strokeWidth={3} />
-              Đã trả
+              Đã xong
+            </span>
+          ) : isOwed ? (
+            <span className="inline-flex shrink-0 items-center rounded-full bg-taxi/10 px-2.5 py-0.5 text-[11px] font-semibold text-taxi">
+              Nợ mình
             </span>
           ) : (
-            <span className="inline-flex shrink-0 items-center rounded-full bg-taxi/10 px-2.5 py-0.5 text-[11px] font-semibold text-taxi">
-              Còn nợ
+            <span className="inline-flex shrink-0 items-center rounded-full bg-market/10 px-2.5 py-0.5 text-[11px] font-semibold text-market">
+              Mình nợ
             </span>
           )}
         </div>
         <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
-          {balance.paid ? (
-            <>Đã trả {formatAED(balance.owed)}</>
+          {isZero ? (
+            <>Đã trả {formatAED(balance.lent)}
+              {balance.loan > 0 && <> · đã chi {formatAED(balance.loan)}</>}
+            </>
           ) : (
             <>
-              Cần trả{" "}
-              <span className="font-semibold text-foreground">
-                {formatAED(balance.outstanding)}
-              </span>
-              {balance.settled > 0 && (
-                <> · đã trả {formatAED(balance.settled)}</>
-              )}
+              {isOwed ? "Phải thu " : "Phải trả "}
+              <span className="font-semibold text-foreground">{formatAED(abs)}</span>
+              {balance.settled > 0 && <> · đã trả {formatAED(balance.settled)}</>}
             </>
           )}
         </p>
       </div>
 
-      {!balance.paid && (
+      {!isZero && (
         <Button
           type="button"
           size="sm"

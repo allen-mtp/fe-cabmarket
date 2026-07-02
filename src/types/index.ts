@@ -54,14 +54,10 @@ export interface MembersResponse {
 /** Công nợ tổng hợp của 1 thành viên. */
 export interface MemberBalance {
   name: string;
-  /** Tổng tiền cần trả. */
-  owed: number;
-  /** Số đã đánh dấu thanh toán. */
+  lent: number;
+  loan: number;
   settled: number;
-  /** Còn nợ = max(0, owed - settled). */
-  outstanding: number;
-  /** Đã trả hết chưa. */
-  paid: boolean;
+  balance: number;
 }
 
 export interface BalancesResponse {

@@ -51,9 +51,13 @@ export default function HistoryPage() {
     if (meta && page > meta.totalPages) setPage(meta.totalPages);
   }, [meta, page]);
 
-  const handleDeleted = () => {
+  const handleDeleted = React.useCallback(() => {
     void refetch();
-  };
+  }, [refetch]);
+
+  const handleDeleteMany = React.useCallback((ids: string[]) => {
+    void refetch();
+  }, [refetch]);
 
   return (
     <div className="space-y-6 animate-fade-in">
@@ -99,6 +103,7 @@ export default function HistoryPage() {
             transactions={data}
             loading={status === "loading"}
             onDeleted={handleDeleted}
+            onDeleteMany={handleDeleteMany}
           />
 
           {meta && meta.totalPages > 1 && (

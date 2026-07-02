@@ -16,6 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Table,
   TableBody,
@@ -37,13 +38,58 @@ interface TransactionTableProps {
   transactions: Transaction[];
   loading: boolean;
   onDeleted?: (id: string) => void;
+  onDeleteMany?: (ids: string[]) => void;
 }
 
 export function TransactionTable({
   transactions,
   loading,
   onDeleted,
+  onDeleteMany,
 }: TransactionTableProps) {
+  const [selectedIds, setSelectedIds] = React.useState<Set<string>>(new Set());
+
+  React.useEffect(() => {
+    setSelectedIds(new Set());
+  }, [transactions]);
+
+  const allSelected = transactions.length > 0 && selectedIds.size === transactions.length;
+  const someSelected = selectedIds.size > 0;
+
+  const toggleAll = () => {
+    if (allSelected) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(transactions.map((tx) => tx.id)));
+    }
+  };
+
+  const toggleOne = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleDeleteSelected = async () => {
+    const ids = [...selectedIds];
+    try {
+      await transactionsApi.deleteMany(ids);
+      toast.success(`Đã xóa ${ids.length} khoản chia`);
+      setSelectedIds(new Set());
+      onDeleteMany?.(ids);
+      ids.forEach((id) => onDeleted?.(id));
+    } catch (e) {
+      const err = e as { message?: string };
+      toast.error(err.message ?? "Không thể xóa");
+    }
+  };
+
   if (loading) {
     return <TableSkeleton />;
   }
@@ -53,22 +99,50 @@ export function TransactionTable({
   }
 
   return (
-    <Table>
-      <TableHeader>
-        <TableRow className="hover:bg-transparent">
-          <TableHead className="w-[110px] text-[10px] font-semibold uppercase tracking-[0.12em]">Ngày</TableHead>
-          <TableHead className="text-[10px] font-semibold uppercase tracking-[0.12em]">Khoản chia</TableHead>
-          <TableHead className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] md:table-cell">Người đi</TableHead>
-          <TableHead className="text-right text-[10px] font-semibold uppercase tracking-[0.12em]">Số tiền</TableHead>
-          <TableHead className="w-[60px] text-right" />
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {transactions.map((tx) => (
-          <TransactionRow key={tx.id} transaction={tx} onDeleted={onDeleted} />
-        ))}
-      </TableBody>
-    </Table>
+    <div>
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-10">
+              <Checkbox checked={allSelected} onCheckedChange={toggleAll} />
+            </TableHead>
+            <TableHead className="w-[110px] text-[10px] font-semibold uppercase tracking-[0.12em]">Ngày</TableHead>
+            <TableHead className="text-[10px] font-semibold uppercase tracking-[0.12em]">Khoản chia</TableHead>
+            <TableHead className="hidden text-[10px] font-semibold uppercase tracking-[0.12em] md:table-cell">Người đi</TableHead>
+            <TableHead className="text-right text-[10px] font-semibold uppercase tracking-[0.12em]">Số tiền</TableHead>
+            <TableHead className="w-[60px] text-right" />
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {transactions.map((tx) => (
+            <TransactionRow
+              key={tx.id}
+              transaction={tx}
+              selected={selectedIds.has(tx.id)}
+              onToggle={() => toggleOne(tx.id)}
+              onDeleted={onDeleted}
+            />
+          ))}
+        </TableBody>
+      </Table>
+
+      {someSelected && (
+        <div className="flex items-center justify-between border-t border-border/50 px-4 py-2 sm:px-6">
+          <p className="text-xs text-muted-foreground">
+            Đã chọn <span className="font-semibold text-foreground">{selectedIds.size}</span> khoản
+          </p>
+          <Button
+            variant="destructive"
+            size="sm"
+            className="gap-1.5 rounded-lg"
+            onClick={handleDeleteSelected}
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+            Xóa đã chọn
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -84,9 +158,13 @@ function SessionPill({ session }: { session: NonNullable<Transaction["session"]>
 
 function TransactionRow({
   transaction,
+  selected,
+  onToggle,
   onDeleted,
 }: {
   transaction: Transaction;
+  selected: boolean;
+  onToggle: () => void;
   onDeleted?: (id: string) => void;
 }) {
   const [deleting, setDeleting] = React.useState(false);
@@ -115,6 +193,9 @@ function TransactionRow({
 
   return (
     <TableRow className="group align-top transition-colors hover:bg-accent/40">
+      <TableCell className="py-3">
+        <Checkbox checked={selected} onCheckedChange={onToggle} />
+      </TableCell>
       <TableCell className="whitespace-nowrap py-3 text-sm text-muted-foreground">
         {formatDate(transaction.date)}
       </TableCell>

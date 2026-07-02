@@ -4,8 +4,7 @@
  * Quy tắc:
  *  - Tổng tiền chia đều cho những người ĐÃ ĐI (participants). Người không đi
  *    không bị tính.
- *  - Chia số nguyên: phần dư (do làm tròn) được rải +1 cho những người đầu
- *    danh sách để tổng các phần đúng bằng tổng tiền (không lệch 1 đồng).
+ *  - Chia số nguyên: Math.floor(amount / count), bỏ phần dư.
  *  - Người trả (payer) đã ứng toàn bộ tiền, nên những người còn lại "nợ" payer
  *    đúng phần của mình.
  */
@@ -39,17 +38,12 @@ export function computeSplit(
   }
 
   const base = Math.floor(amount / count);
-  let remainder = amount - base * count; // 0..count-1
 
-  const shares: MemberShare[] = people.map((name) => {
-    const extra = remainder > 0 ? 1 : 0;
-    if (remainder > 0) remainder -= 1;
-    return {
-      name,
-      amount: base + extra,
-      isPayer: name === payer,
-    };
-  });
+  const shares: MemberShare[] = people.map((name) => ({
+    name,
+    amount: base,
+    isPayer: name === payer,
+  }));
 
   const owedToPayer = shares
     .filter((s) => !s.isPayer)
