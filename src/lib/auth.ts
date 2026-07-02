@@ -42,3 +42,21 @@ export function isAuthenticated(): boolean {
   if (typeof window === "undefined") return false;
   return !!localStorage.getItem(USER_KEY);
 }
+
+/** Đọc thời điểm hết hạn (ms) từ claim `exp` trong JWT, null nếu không có/không đọc được. */
+export function getTokenExpiry(): number | null {
+  const token = getStoredToken();
+  if (!token) return null;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1] ?? "")) as { exp?: number };
+    return typeof payload.exp === "number" ? payload.exp * 1000 : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Token còn hiệu lực (tồn tại và chưa hết hạn). */
+export function isTokenValid(): boolean {
+  const exp = getTokenExpiry();
+  return exp !== null && exp > Date.now();
+}

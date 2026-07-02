@@ -1,5 +1,10 @@
 import axios, { type AxiosInstance, AxiosError } from "axios";
-import { getStoredToken, removeStoredToken, setStoredToken } from "./auth";
+import {
+  getStoredToken,
+  removeStoredToken,
+  removeStoredUser,
+  setStoredToken,
+} from "./auth";
 import type {
   ApiError,
   BalancesResponse,
@@ -46,6 +51,9 @@ api.interceptors.response.use(
       typeof window !== "undefined" &&
       !requestUrl.includes("/auth/login")
     ) {
+      // Token hết hạn / không hợp lệ -> dọn phiên và đưa về đăng nhập.
+      removeStoredToken();
+      removeStoredUser();
       const currentPath = window.location.pathname;
       if (currentPath !== "/login") {
         window.location.assign(

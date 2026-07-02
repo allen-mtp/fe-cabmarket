@@ -4,7 +4,14 @@ import * as React from "react";
 import { useRouter } from "next/navigation";
 
 import { authApi } from "@/lib/api";
-import { getStoredUser, removeStoredUser, removeStoredToken, setStoredUser } from "@/lib/auth";
+import {
+  getStoredUser,
+  getTokenExpiry,
+  isTokenValid,
+  removeStoredUser,
+  removeStoredToken,
+  setStoredUser,
+} from "@/lib/auth";
 import type { ApiError, LoginInput, User } from "@/types";
 
 interface AuthContextValue {
@@ -31,7 +38,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = React.useState(false);
   const router = useRouter();
 
+  const clearSession = React.useCallback(() => {
+    removeStoredUser();
+    removeStoredToken();
+    setUser(null);
+  }, []);
+
   React.useEffect(() => {
+    // Token đã hết hạn / không có -> coi như chưa đăng nhập ngay, khỏi gọi API.
+    if (!isTokenValid()) {
+      clearSession();
+      setInitializing(false);
+      return;
+    }
+
     const cached = getStoredUser();
     if (cached) setUser(cached);
 
@@ -41,13 +61,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(u);
         setStoredUser(u);
       })
-      .catch(() => {
-        removeStoredUser();
-        removeStoredToken();
-        setUser(null);
-      })
+      .catch(() => clearSession())
       .finally(() => setInitializing(false));
-  }, []);
+  }, [clearSession]);
+
+  // Hẹn giờ tự đăng xuất đúng lúc token hết hạn (kể cả khi đang mở app, ngồi yên).
+  React.useEffect(() => {
+    if (!user) return;
+    const exp = getTokenExpiry();
+    if (exp === null) return;
+    const ms = exp - Date.now();
+    if (ms <= 0) {
+      clearSession();
+      return;
+    }
+    const timer = setTimeout(clearSession, ms);
+    return () => clearTimeout(timer);
+  }, [user, clearSession]);
 
   const login = React.useCallback(async (input: LoginInput) => {
     setLoading(true);
